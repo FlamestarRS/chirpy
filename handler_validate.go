@@ -2,34 +2,34 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
 
-func handlerValidate(w http.ResponseWriter, r *http.Request) {
+/*
+func handlerValidate(w http.ResponseWriter, r *http.Request) error {
 	type parameters struct {
 		Body string `json:"body"`
 	}
-	type returnVals struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
+	//type returnVals struct {
+	//	CleanedBody string `json:"cleaned_body"`
+	//}
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Something went wrong", err)
-		return
+		return respondWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 	}
 
 	if len(params.Body) > 140 {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
-		return
+		return respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 	}
 
-	respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: handlerFilter(params.Body)})
-}
+	return nil
+	//respondWithJSON(w, http.StatusOK, returnVals{CleanedBody: handlerFilter(params.Body)})
+}*/
 
 func handlerFilter(text string) string {
 	wordsToFilter := map[string]struct{}{
@@ -49,28 +49,28 @@ func handlerFilter(text string) string {
 	return strings.Join(words, " ")
 }
 
-func respondWithError(w http.ResponseWriter, statusCode int, msg string, err error) {
+func respondWithError(w http.ResponseWriter, statusCode int, msg string, err error) error {
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	if statusCode > 499 {
-		fmt.Printf("internal server error: %v\n", statusCode)
+		log.Printf("internal server error: %v", statusCode)
 	}
 	type errorResponse struct {
 		Error string `json:"error"`
 	}
 
-	respondWithJSON(w, statusCode, errorResponse{Error: msg})
+	return respondWithJSON(w, statusCode, errorResponse{Error: msg})
 }
 
-func respondWithJSON(w http.ResponseWriter, statusCode int, payload interface{}) {
+func respondWithJSON(w http.ResponseWriter, statusCode int, payload interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 	data, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Println(err)
 		w.WriteHeader(500)
-		return
+		return err
 	}
 	w.WriteHeader(statusCode)
 	w.Write(data)
+	return nil
 }
