@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/FlamestarRS/chirpy/internal/database"
@@ -36,8 +38,8 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if len(params.Body) > 140 {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+	err = validateChirp(w, params.Body)
+	if err != nil {
 		return
 	}
 
@@ -64,4 +66,30 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 		},
 	})
 
+}
+
+func validateChirp(w http.ResponseWriter, text string) error {
+	if len(text) > 140 {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
+		return fmt.Errorf("chirp cannot exceed 140 characters")
+	}
+	return nil
+}
+
+func handlerFilter(text string) string {
+	wordsToFilter := map[string]struct{}{
+		"kerfuffle": {},
+		"sharbert":  {},
+		"fornax":    {},
+	}
+
+	words := strings.Split(text, " ")
+
+	for i, word := range words {
+		lowered := strings.ToLower(word)
+		if _, ok := wordsToFilter[lowered]; ok {
+			words[i] = "****"
+		}
+	}
+	return strings.Join(words, " ")
 }
