@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/FlamestarRS/chirpy/internal/auth"
+	"github.com/FlamestarRS/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -17,11 +20,10 @@ type User struct {
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
-	type response struct {
-		User
-	}
+
 	params := parameters{}
 	decoder := json.NewDecoder(req.Body)
 	err := decoder.Decode(&params)
@@ -29,18 +31,27 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, req *http.Request
 		respondWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
-	user, err := cfg.db.CreateUser(req.Context(), params.Email)
+
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		fmt.Println("error hashing password")
+	}
+
+	user, err := cfg.db.CreateUser(req.Context(), database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "error creating user", err)
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, response{
-		User: User{
+	respondWithJSON(w, http.StatusCreated,
+		User{
 			ID:        user.ID,
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
 			Email:     user.Email,
 		},
-	})
+	)
 }
