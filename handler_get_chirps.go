@@ -39,15 +39,12 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	type response struct {
-		Chirp
-	}
-
-	respondWithJSON(w, http.StatusOK, response{Chirp: Chirp{
-		ID:        chirp.ID,
-		CreatedAt: chirp.CreatedAt,
-		UpdatedAt: chirp.UpdatedAt,
-		Body:      chirp.Body,
-		UserID:    chirp.UserID,
-	}})
+	respondWithJSON(w, http.StatusOK,
+		Chirp{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		})
 }
