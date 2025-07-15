@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -44,10 +43,7 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 	}
 
 	chirp, err := cfg.db.CreateChirp(req.Context(), database.CreateChirpParams{
-		Body: sql.NullString{
-			String: params.Body,
-			Valid:  true,
-		},
+		Body:   params.Body,
 		UserID: params.UserID,
 	})
 
@@ -61,7 +57,7 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 			ID:        chirp.ID,
 			CreatedAt: chirp.CreatedAt,
 			UpdatedAt: chirp.UpdatedAt,
-			Body:      handlerFilter(chirp.Body.String),
+			Body:      handlerFilter(chirp.Body),
 			UserID:    chirp.UserID,
 		},
 	})
