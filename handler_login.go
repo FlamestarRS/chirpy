@@ -26,7 +26,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = auth.CheckPasswordHash(user.HashedPassword, params.Password)
+	err = auth.CheckPasswordHash(params.Password, user.HashedPassword)
 
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", nil)
