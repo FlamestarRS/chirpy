@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FlamestarRS/chirpy/internal/auth"
 	"github.com/FlamestarRS/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -33,6 +34,18 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	bearerToken, err := auth.GetBearerToken(req.Header)
+
+	if err != nil {
+		fmt.Println("error getting bearer token")
+		return
+	}
+	authenticatedID, err := auth.ValidateJWT(bearerToken, cfg.secret)
+
+	if err != nil {
+		fmt.Println("error validating jwt")
+		return
+	}
 	err = validateChirp(w, params.Body)
 	if err != nil {
 		return
@@ -40,7 +53,7 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 
 	chirp, err := cfg.db.CreateChirp(req.Context(), database.CreateChirpParams{
 		Body:   params.Body,
-		UserID: params.UserID,
+		UserID: authenticatedID,
 	})
 
 	if err != nil {
