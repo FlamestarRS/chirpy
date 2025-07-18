@@ -9,12 +9,19 @@ func (cfg *apiConfig) handlerReset(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	cfg.fileserverHits.Store(0)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Hits reset to 0"))
 
 	err := cfg.db.ResetUsers(req.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("error resetting database" + err.Error()))
+		w.Write([]byte("error resetting users database" + err.Error()))
 	}
+
+	err = cfg.db.ResetRefreshTokens(req.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("error resetting refresh tokens database" + err.Error()))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Hits reset to 0, databasses successfully reset"))
 }

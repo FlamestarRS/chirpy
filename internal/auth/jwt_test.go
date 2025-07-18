@@ -2,7 +2,6 @@ package auth
 
 import (
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -10,8 +9,7 @@ import (
 func TestGenerateJWT(t *testing.T) {
 	userID := uuid.New()
 	tokenSecret := "test"
-	expiresIn := time.Duration(10) * time.Second
-	token, err := MakeJWT(userID, tokenSecret, expiresIn)
+	token, err := MakeJWT(userID, tokenSecret)
 	if err != nil {
 		t.Errorf("error creating token")
 	}
@@ -24,7 +22,7 @@ func TestGenerateJWT(t *testing.T) {
 
 func TestValidateJWT2(t *testing.T) {
 	userID := uuid.New()
-	validToken, _ := MakeJWT(userID, "secret", time.Hour)
+	validToken, _ := MakeJWT(userID, "secret")
 
 	tests := []struct {
 		name        string

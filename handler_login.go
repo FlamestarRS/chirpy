@@ -1,19 +1,22 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/FlamestarRS/chirpy/internal/auth"
+	"github.com/FlamestarRS/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, req *http.Request) {
 	type parameters struct {
-		Email      string        `json:"email"`
-		Password   string        `json:"password"`
-		Expiration time.Duration `json:"expires_in_seconds"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
+
 	params := parameters{}
 	decoder := json.NewDecoder(req.Body)
 	err := decoder.Decode(&params)
@@ -21,9 +24,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, req *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, "Something went wrong", err)
 		return
 	}
-	if params.Expiration <= 0 || params.Expiration > 3600 {
-		params.Expiration = time.Second * 3600
-	}
+
 	user, err := cfg.db.GetUserByEmail(req.Context(), params.Email)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", nil)
@@ -36,16 +37,34 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	token, err := auth.MakeJWT(user.ID, cfg.secret, params.Expiration)
+	accessToken, err := auth.MakeJWT(user.ID, cfg.secret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "token expired", nil)
 	}
 
+	refreshTokenID, err := auth.MakeRefreshToken()
+	if err != nil {
+		fmt.Println("error creating refresh token id")
+		return
+	}
+
+	refreshToken, err := cfg.db.CreateRefreshToken(req.Context(), database.CreateRefreshTokenParams{
+		Token:     refreshTokenID,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(1440 * time.Hour), // 60 days after creation
+		RevokedAt: sql.NullTime{},
+	})
+	if err != nil {
+		fmt.Println("could not create refresh token", err)
+		return
+	}
+
 	respondWithJSON(w, http.StatusOK, User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken.Token,
 	})
 }

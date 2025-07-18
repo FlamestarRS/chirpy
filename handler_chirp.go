@@ -35,24 +35,30 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 	}
 
 	bearerToken, err := auth.GetBearerToken(req.Header)
-
 	if err != nil {
 		fmt.Println("error getting bearer token")
 		return
 	}
-	authenticatedID, err := auth.ValidateJWT(bearerToken, cfg.secret)
 
-	if err != nil {
-		fmt.Println("error validating jwt")
+	refreshToken, _ := cfg.db.GetRefreshTokenbyID(req.Context(), bearerToken)
+	if refreshToken.Token == bearerToken {
+		respondWithError(w, http.StatusUnauthorized, "access token requried", nil)
 		return
 	}
+
+	authenticatedID, err := auth.ValidateJWT(bearerToken, cfg.secret)
+	if err != nil {
+		fmt.Println("error validating jwt", err)
+		return
+	}
+
 	err = validateChirp(w, params.Body)
 	if err != nil {
 		return
 	}
 
 	chirp, err := cfg.db.CreateChirp(req.Context(), database.CreateChirpParams{
-		Body:   params.Body,
+		Body:   handlerFilter(params.Body),
 		UserID: authenticatedID,
 	})
 
@@ -66,7 +72,7 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 			ID:        chirp.ID,
 			CreatedAt: chirp.CreatedAt,
 			UpdatedAt: chirp.UpdatedAt,
-			Body:      handlerFilter(chirp.Body),
+			Body:      chirp.Body,
 			UserID:    chirp.UserID,
 		})
 
