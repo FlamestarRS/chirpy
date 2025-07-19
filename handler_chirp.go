@@ -36,7 +36,7 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 
 	bearerToken, err := auth.GetBearerToken(req.Header)
 	if err != nil {
-		fmt.Println("error getting bearer token")
+		respondWithError(w, http.StatusUnauthorized, "malformed header", nil)
 		return
 	}
 
@@ -48,7 +48,7 @@ func (cfg *apiConfig) handlerChirp(w http.ResponseWriter, req *http.Request) {
 
 	authenticatedID, err := auth.ValidateJWT(bearerToken, cfg.secret)
 	if err != nil {
-		fmt.Println("error validating jwt", err)
+		respondWithError(w, http.StatusUnauthorized, "error validating jwt", nil)
 		return
 	}
 

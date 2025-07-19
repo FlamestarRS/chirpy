@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -36,7 +35,8 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, req *http.Request
 
 	hashedPassword, err := auth.HashPassword(params.Password)
 	if err != nil {
-		fmt.Println("error hashing password")
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password", err)
+		return
 	}
 
 	user, err := cfg.db.CreateUser(req.Context(), database.CreateUserParams{
