@@ -27,19 +27,19 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, req *http.Request) {
 
 	user, err := cfg.db.GetUserByEmail(req.Context(), params.Email)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", nil)
+		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", err)
 		return
 	}
 
 	err = auth.CheckPasswordHash(params.Password, user.HashedPassword)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", nil)
+		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", err)
 		return
 	}
 
 	accessToken, err := auth.MakeJWT(user.ID, cfg.secret)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "token expired", nil)
+		respondWithError(w, http.StatusUnauthorized, "token expired", err)
 	}
 
 	refreshTokenID, err := auth.MakeRefreshToken()

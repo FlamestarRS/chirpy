@@ -16,7 +16,7 @@ func (cfg *apiConfig) handlerRevoke(w http.ResponseWriter, req *http.Request) {
 
 	refreshToken, err := cfg.db.GetRefreshTokenbyID(req.Context(), TOKEN_STRING)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "refresh token does not exist", nil)
+		respondWithError(w, http.StatusUnauthorized, "refresh token does not exist", err)
 		return
 	}
 

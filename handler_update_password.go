@@ -24,19 +24,19 @@ func (cfg *apiConfig) handlerUpdatePassword(w http.ResponseWriter, req *http.Req
 
 	bearerToken, err := auth.GetBearerToken(req.Header)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "malformed header", nil)
+		respondWithError(w, http.StatusUnauthorized, "malformed header", err)
 		return
 	}
 
 	refreshToken, _ := cfg.db.GetRefreshTokenbyID(req.Context(), bearerToken)
 	if refreshToken.Token == bearerToken {
-		respondWithError(w, http.StatusUnauthorized, "access token requried", nil)
+		respondWithError(w, http.StatusUnauthorized, "access token requried", err)
 		return
 	}
 
 	authenticatedID, err := auth.ValidateJWT(bearerToken, cfg.secret)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "error validating jwt", nil)
+		respondWithError(w, http.StatusUnauthorized, "error validating jwt", err)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (cfg *apiConfig) handlerUpdatePassword(w http.ResponseWriter, req *http.Req
 		ID:             authenticatedID,
 	})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error updating password", nil)
+		respondWithError(w, http.StatusInternalServerError, "error updating password", err)
 		return
 	}
 

@@ -19,18 +19,18 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, req *http.Request) {
 
 	refreshToken, err := cfg.db.GetRefreshTokenbyID(req.Context(), TOKEN_STRING)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "refresh token does not exist", nil)
+		respondWithError(w, http.StatusUnauthorized, "refresh token does not exist", err)
 		return
 	}
 
 	if refreshToken.RevokedAt.Valid {
-		respondWithError(w, http.StatusUnauthorized, "refresh token revoked", nil)
+		respondWithError(w, http.StatusUnauthorized, "refresh token revoked", err)
 		return
 	}
 
 	durationUntil := time.Until(refreshToken.ExpiresAt)
 	if durationUntil <= 0 {
-		respondWithError(w, http.StatusUnauthorized, "refresh token expired", nil)
+		respondWithError(w, http.StatusUnauthorized, "refresh token expired", err)
 		return
 	}
 
@@ -39,7 +39,7 @@ func (cfg *apiConfig) handlerRefresh(w http.ResponseWriter, req *http.Request) {
 	}
 	newJwt, err := auth.MakeJWT(refreshToken.UserID, cfg.secret)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error creating new jwt", nil)
+		respondWithError(w, http.StatusInternalServerError, "error creating new jwt", err)
 	}
 	respondWithJSON(w, http.StatusOK, response{
 		Token: newJwt,
