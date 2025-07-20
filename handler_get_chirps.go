@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/FlamestarRS/chirpy/internal/database"
 	"github.com/google/uuid"
@@ -10,6 +11,10 @@ import (
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, req *http.Request) {
 	authorID := req.URL.Query().Get("author_id")
+	sortMethod := req.URL.Query().Get("sort")
+	if sortMethod != "asc" && sortMethod != "desc" {
+		respondWithError(w, http.StatusBadRequest, "use asc or desc to sort by creation", nil)
+	}
 
 	var allChirps []database.Chirp
 	var err error
@@ -44,6 +49,12 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, req *http.Reque
 			Body:      chirp.Body,
 			UserID:    chirp.UserID,
 		})
+	}
+
+	if sortMethod == "desc" {
+		sort.Slice(formatted, func(i, j int) bool { return formatted[i].CreatedAt.After(formatted[j].CreatedAt) })
+		respondWithJSON(w, http.StatusOK, formatted)
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, formatted)
