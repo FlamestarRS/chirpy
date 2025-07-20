@@ -72,7 +72,7 @@ func (q *Queries) ResetUsers(ctx context.Context) error {
 
 const updatePassword = `-- name: UpdatePassword :exec
 UPDATE users
-SET email = $1, hashed_password = $2
+SET email = $1, hashed_password = $2, updated_at = NOW()
 WHERE id = $3
 `
 
@@ -89,7 +89,7 @@ func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) 
 
 const upgradeChirpyRedByID = `-- name: UpgradeChirpyRedByID :exec
 UPDATE users
-SET is_chirpy_red = true
+SET is_chirpy_red = true, updated_at = NOW()
 WHERE id = $1
 `
 
